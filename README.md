@@ -11,7 +11,7 @@ A ticket service management for a theatre.
 Start from the first row and first seat.
 
 
-###Example
+###Example (Might not display properly)
 *****  Welcome to the Ling's ticket service for Walmart. *****
 Please enter the number of rows in the theater:
 5
