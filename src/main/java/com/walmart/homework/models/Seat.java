@@ -1,5 +1,6 @@
 package com.walmart.homework.models;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 
@@ -13,6 +14,7 @@ import static com.walmart.homework.models.SeatState.RESERVED;
  * Date: 8/1/18
  */
 @Data
+@Builder
 public class Seat {
     @NonNull
     String seatId;

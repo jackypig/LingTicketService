@@ -7,3 +7,4 @@ com/walmart/homework/service/TicketService.class
 com/walmart/homework/models/SeatHold.class
 com/walmart/homework/service/LingTicketService.class
 com/walmart/homework/models/Order.class
+com/walmart/homework/models/Seat$SeatBuilder.class

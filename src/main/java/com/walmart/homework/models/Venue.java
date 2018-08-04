@@ -12,12 +12,11 @@ import static com.walmart.homework.models.SeatState.AVAILABLE;
  * Date: 8/1/18
  */
 public class Venue {
-    private static Venue instance;
     private int availableSeats;
     private Seat[][] allSeats;
     private Map<Integer, Set<Seat>> seatsByZone;
 
-    private Venue (int rows, int cols) {
+    public Venue (int rows, int cols) {
         Set<Seat> seats1 = new LinkedHashSet<>();
         Set<Seat> seats2 = new LinkedHashSet<>();
         Set<Seat> seats3 = new LinkedHashSet<>();
@@ -54,13 +53,6 @@ public class Venue {
         }
 
         this.seatsByZone = ImmutableMap.of(1, seats1, 2, seats2, 3, seats3, 4, seats4);
-    }
-
-    public static synchronized Venue getInstance(int rows, int numberOfSeatsPerRow){
-        if(instance == null){
-            instance = new Venue(rows, numberOfSeatsPerRow);
-        }
-        return instance;
     }
 
     public void holdSeat( Seat seat ) {

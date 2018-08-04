@@ -8,7 +8,7 @@ A ticket service management for a theatre.
 4. run `java -jar ling-ticket-service.jar`
 
 ### Seat holding process
-- The venue is divided into six sections as follows:
+- The venue is divided into four sections as follows:
 
 | 2 | 1 | 2 |  
 | 4 | 3 | 4 |

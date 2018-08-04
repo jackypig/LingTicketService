@@ -1,6 +1,7 @@
 
 package com.walmart.homework.service;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.walmart.homework.models.*;
 
 import java.util.*;
@@ -20,12 +21,19 @@ public class LingTicketService implements TicketService {
     private Map<Integer, SeatHold> seatHoldMap;
     private Map<String, Order> orderMap;
     private AtomicInteger holdId;
+    private int expiredPeriod;
 
-    public LingTicketService (int rows, int cols) {
-        this.venue = Venue.getInstance(rows, cols);
+    @VisibleForTesting
+    LingTicketService (int rows, int cols, int expiredPeriod) {
+        this.venue = new Venue(rows, cols);
         this.seatHoldMap = new HashMap<>();
         this.orderMap = new HashMap<>();
         this.holdId = new AtomicInteger(0);
+        this.expiredPeriod = expiredPeriod;
+    }
+
+    public LingTicketService( int rows, int cols ) {
+        this( rows, cols, EXPIRED_PERIOD );
     }
 
     public int numSeatsAvailable() {
@@ -42,7 +50,8 @@ public class LingTicketService implements TicketService {
         return seatHold;
     }
 
-    private Set<Seat> findBestSeats( int numSeats ) {
+    @VisibleForTesting
+    Set<Seat> findBestSeats( int numSeats ) {
         Set<Seat> seatsToHold = new HashSet<>();
 
         for ( int i=1; i<=4; i++ ) {
@@ -99,7 +108,7 @@ public class LingTicketService implements TicketService {
         long current = new Date().getTime();
         for ( SeatHold seatHold: seatHoldMap.values() ) {
             // Release seats if expired
-            if (current - seatHold.getCreatedTime() > EXPIRED_PERIOD) {
+            if (current - seatHold.getCreatedTime() > expiredPeriod) {
                 for (Seat seat: seatHold.getSeats()) {
                     venue.releaseSeat(seat);
                 }
