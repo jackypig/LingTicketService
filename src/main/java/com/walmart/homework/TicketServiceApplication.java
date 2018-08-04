@@ -101,8 +101,8 @@ public class TicketServiceApplication {
                     if (seatHold != null) {
                         System.out.println("You have successfully held seats " +
                                 Util.generateSeatsString( seatHold.getSeats() ) +
-                                "\n, your seat hold ID is " + seatHold.getId() +
-                                "\n as follows. It will hold for you for " + LingTicketService.EXPIRED_PERIOD / 1000 + " seconds, please reserve before it expires.");
+                                "as shown below, your seat hold ID is " + seatHold.getId() +
+                                ".\n It will hold for you for " + LingTicketService.EXPIRED_PERIOD / 1000 + " seconds, please reserve before it expires.");
                         lingTicketService.displayReservedSeats( seatHold.getSeats() );
 
                     } else {
@@ -148,7 +148,7 @@ public class TicketServiceApplication {
                     if (seats != null) {
                         System.out.println( "Your reserved seats are: \n" +
                                 Util.generateSeatsString( seats ) + "\n" +
-                                ". Enjoy your show!\n" );
+                                "as shown below. Enjoy your show!\n" );
                         lingTicketService.displayReservedSeats( seats );
 
                     } else {
