@@ -2,8 +2,8 @@
 A ticket service management for a theatre.
 
 ## Running the application
-1. mvn clean
-2. mvn package
+1. Clone this project
+2. Run "**mvn clean install**" 
 3. Change the directory to /target folder
 4. run "**java -jar ling-ticket-service.jar**"
 
