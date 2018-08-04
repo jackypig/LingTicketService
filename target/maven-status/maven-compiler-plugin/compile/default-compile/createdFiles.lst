@@ -1,6 +1,5 @@
 com/walmart/homework/models/Seat.class
 com/walmart/homework/models/Util.class
-com/walmart/homework/models/SeatHold$SeatHoldBuilder.class
 com/walmart/homework/models/Venue.class
 com/walmart/homework/TicketServiceApplication.class
 com/walmart/homework/models/SeatState.class

@@ -5,7 +5,7 @@ A ticket service management for a theatre.
 1. mvn clean
 2. mvn package
 3. Change the directory to /target folder
-4. run "**java -jar Walmart-ticket-service.jar**"
+4. run "**java -jar ling-ticket-service.jar**"
 
 ### Seat holding process
 - The venue is divided into six sections as follows:
