@@ -5,8 +5,7 @@ import com.walmart.homework.models.SeatHold;
 /**
  * Author: Ling Hung
  * Project: walmart-ticket-service
- * Date: 11/5/16
- * Time: 9:11 PM
+ * Date: 8/1/18
  */
 public interface TicketService {
 

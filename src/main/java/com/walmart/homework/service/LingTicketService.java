@@ -1,73 +1,85 @@
+
 package com.walmart.homework.service;
 
 import com.walmart.homework.models.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import static com.walmart.homework.models.SeatState.AVAILABLE;
 
 /**
  * Author: Ling Hung
  * Project: walmart-ticket-service
- * Date: 11/5/16
- * Time: 9:15 PM
+ * Date: 8/1/18
  */
 public class LingTicketService implements TicketService {
-    private static Venue venue;
-    private Map<Integer, SeatHold> seatHoldMap = new HashMap<Integer, SeatHold>();
-    private Map<String, Order> orderMap = new HashMap<String, Order>();
-    private Queue<SeatHold> seatHolds = new LinkedList<SeatHold>();
-    private int holdId = 1000;
+    public static final int EXPIRED_PERIOD = 15000;  // Milliseconds
+    private Venue venue;
+    private Map<Integer, SeatHold> seatHoldMap;
+    private Map<String, Order> orderMap;
+    private AtomicInteger holdId;
 
-    public LingTicketService (int rows, int seatsPerRow) {
-        venue = Venue.getInstance(rows, seatsPerRow);
-    }
-
-    public Seat[][] showAllSeats() {
-        return venue.getAllSeats();
+    public LingTicketService (int rows, int cols) {
+        this.venue = Venue.getInstance(rows, cols);
+        this.seatHoldMap = new HashMap<>();
+        this.orderMap = new HashMap<>();
+        this.holdId = new AtomicInteger(0);
     }
 
     public int numSeatsAvailable() {
         return venue.getAvailableSeats();
     }
 
-    public synchronized SeatHold findAndHoldSeats(int numSeats, String customerEmail) {
-        Set<Seat> seats = new LinkedHashSet<Seat>();
-        int count = numSeats;
-        for (int i=0; i<venue.getRows(); i++) {
-            for (int j=0; j<venue.getNumberOfSeatsPerRow(); j++) {
-                if (count == 0) {
-                    break;
-                }
+    public synchronized SeatHold findAndHoldSeats(int numSeats, String email) {
+        Set<Seat> seatsToHold = findBestSeats( numSeats );
+        int seatHoldId = holdId.getAndIncrement();
+        SeatHold seatHold = new SeatHold( seatHoldId, seatsToHold, new Date().getTime(), email );
 
-                if (venue.getAllSeats()[i][j].getSeatState() == SeatState.AVAILABLE) {
-                    seats.add(holdSeat(i, j));
-                    count--;
-                }
-            }
-        }
-
-        SeatHold seatHold = new SeatHold(seats, holdId, new Date().getTime(), customerEmail);
-        seatHoldMap.put(holdId, seatHold);
-        seatHolds.offer(seatHold);
-        holdId++;
+        seatHoldMap.put(seatHoldId, seatHold);
 
         return seatHold;
     }
 
+    private Set<Seat> findBestSeats( int numSeats ) {
+        Set<Seat> seatsToHold = new HashSet<>();
+
+        for ( int i=1; i<=4; i++ ) {
+            for ( Seat seat: venue.getSeatByZone(i) ) {
+                if (numSeats == 0) {
+                    return seatsToHold;
+                }
+
+                if (seat.getState() == AVAILABLE) {
+                    venue.holdSeat( seat );
+                    seatsToHold.add( seat );
+                    numSeats--;
+                }
+            }
+        }
+
+        return seatsToHold;
+    }
+
     public synchronized String reserveSeats(int seatHoldId, String customerEmail) {
-        SeatHold seatHold = seatHoldMap.get(seatHoldId);
+        SeatHold seatHold = seatHoldMap.get( seatHoldId );
         if (seatHold == null) {
             return null;
         }
 
         Set<Seat> holdSeats = seatHold.getSeats();
-        Order order = new Order();
-        order.setCustomerEmail(seatHold.getCustomerEmail());
-        String confirmationCode = UUID.randomUUID().toString();
-        order.setConfirmationCode(confirmationCode);
-        order.setReservedSeats(holdSeats);
+        String confirmationCode = Util.generateId();
+
+        // If code exists, regenerate another one
+        while( orderMap.containsKey( confirmationCode ) ) {
+            confirmationCode = Util.generateId();
+        }
+
+        Order order = new Order( seatHold.getCustomerEmail(), confirmationCode, holdSeats );
 
         for (Seat seat: holdSeats) {
-            seat.reserve();
+            venue.reserveSeat( seat );
         }
 
         // Save order to map
@@ -79,28 +91,93 @@ public class LingTicketService implements TicketService {
         return confirmationCode;
     }
 
-    public Seat holdSeat(int row, int column) {
-        return venue.holdSeat(row, column);
-    }
-
     public Order getOrder(String code) {
         return orderMap.get(code);
     }
 
     public void refresh() {
         long current = new Date().getTime();
-        boolean proceed = true;
-        while (!seatHolds.isEmpty() && proceed) {
-            SeatHold seatHold = seatHolds.peek();
-            if (current - seatHold.getTimeOfHold() > 30000) {
+        for ( SeatHold seatHold: seatHoldMap.values() ) {
+            // Release seats if expired
+            if (current - seatHold.getCreatedTime() > EXPIRED_PERIOD) {
                 for (Seat seat: seatHold.getSeats()) {
                     venue.releaseSeat(seat);
                 }
-                seatHolds.remove(); // same as seatHolds.poll()
-                seatHoldMap.remove(seatHold.getHoldId());
-            } else {
-                proceed = false;
+                seatHoldMap.remove( seatHold.getId() );
             }
         }
+    }
+
+    public void displayAllSeats() {
+        Seat[][] allSeats = venue.getAllSeats();
+        displayStage( allSeats );
+
+        for (int i=0; i<allSeats.length; i++) {
+            StringBuilder sb = new StringBuilder();
+            for (int j=0; j<allSeats[0].length; j++) {
+                Seat seat = allSeats[i][j];
+                if (seat.getState() == SeatState.AVAILABLE) {
+                    sb.append(seat.getZone()).append(" ");
+
+                } else if (seat.getState() == SeatState.HELD) {
+                    sb.append("-").append(" ");
+
+                } else {
+                    sb.append("X").append(" ");
+                }
+            }
+            System.out.println(sb.toString());
+        }
+
+        System.out.println();
+        System.out.println("1-4: Available Zone  -: Held   X: Reserved");
+    }
+
+    public void displayReservedSeats( Set<Seat> seats ) {
+        Seat[][] allSeats = venue.getAllSeats();
+        displayStage( allSeats );
+        Set<String> seatsIds = seats.stream().map( Seat::getSeatId ).collect(Collectors.toSet());
+
+        for (int i=0; i<allSeats.length; i++) {
+            StringBuilder sb = new StringBuilder();
+            for (int j=0; j<allSeats[0].length; j++) {
+                Seat seat = allSeats[i][j];
+
+                if ( seatsIds.contains( seat.getSeatId() ) ) {
+                    sb.append("X").append(" ");
+
+                } else {
+                    sb.append("-").append(" ");
+                }
+            }
+            System.out.println(sb.toString());
+        }
+
+        System.out.println();
+        System.out.println("X: Your seats   -: Other seats");
+    }
+
+    private void displayStage( Seat[][] allSeats ) {
+        StringBuilder stageRow = new StringBuilder();
+        StringBuilder dividerRow = new StringBuilder();
+        int start = 0;
+        if ( allSeats[0].length > 3 ) {
+            while ( start < allSeats[0].length ) {
+                if ( start == allSeats[0].length - 3 ) {
+                    stageRow.append("Stage");
+                    start += 6;
+
+                } else {
+                    stageRow.append(" ");
+                    start++;
+                }
+            }
+        }
+
+        for (int j=0; j<allSeats[0].length * 2; j++) {
+            dividerRow.append( "=" );
+        }
+        System.out.println(stageRow.toString());
+        System.out.println(dividerRow.toString());
     }
 }

@@ -1,77 +1,49 @@
 package com.walmart.homework.models;
 
+import lombok.Data;
+import lombok.NonNull;
+
+import static com.walmart.homework.models.SeatState.AVAILABLE;
+import static com.walmart.homework.models.SeatState.HELD;
+import static com.walmart.homework.models.SeatState.RESERVED;
+
 /**
  * Author: Ling Hung
  * Project: walmart-ticket-service
- * Date: 11/5/16
- * Time: 9:12 PM
+ * Date: 8/1/18
  */
+@Data
 public class Seat {
-    private SeatState seatState;
-    private int row;
-    private int column;
-
-    /**
-     * Constructor of Seat
-     */
-    public Seat(int row, int column){
-        this.row = row;
-        this.column = column;
-        this.seatState = SeatState.AVAILABLE;
-    }
-
-    /**
-     * Get seat state
-     * @return SeatState
-     */
-    public SeatState getSeatState() {
-        return seatState;
-    }
-
-    /**
-     * Get seat id
-     * @return
-     */
-    public String getId() {
-        StringBuilder sb = new StringBuilder();
-        return sb.append(Util.getCharFromInt(row)).append(column + 1).toString();
-    }
-
-    /**
-     * Get seat row
-     * @return
-     */
-    public int getRow() {
-        return row;
-    }
-
-    /**
-     * Get seat column
-     * @return
-     */
-    public int getColumn() {
-        return column;
-    }
+    @NonNull
+    String seatId;
+    @NonNull
+    SeatState state;
+    @NonNull
+    int row;
+    @NonNull
+    int column;
+    @NonNull
+    int zone;
 
     /**
      * Hold the seat
      */
     public void hold(){
-        seatState = SeatState.HELD;
+        this.state = HELD;
     }
 
     /**
      * Reserve the seat
      */
     public void reserve(){
-        seatState = SeatState.RESERVED;
+        this.state = RESERVED;
     }
 
     /**
      * Release the seat
      */
     public void release(){
-        seatState = SeatState.AVAILABLE;
+        this.state = AVAILABLE;
     }
 
 }

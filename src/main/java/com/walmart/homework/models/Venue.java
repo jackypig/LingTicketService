@@ -1,28 +1,55 @@
 package com.walmart.homework.models;
 
+import com.google.common.collect.ImmutableMap;
+
+import java.util.*;
+
+import static com.walmart.homework.models.SeatState.AVAILABLE;
+
 /**
  * Author: Ling Hung
  * Project: walmart-ticket-service
- * Date: 11/5/16
- * Time: 9:18 PM
+ * Date: 8/1/18
  */
 public class Venue {
     private static Venue instance;
-    private int rows;
-    private int numberOfSeatsPerRow;
     private int availableSeats;
     private Seat[][] allSeats;
+    private Map<Integer, Set<Seat>> seatsByZone;
 
-    private Venue (int rows, int numberOfSeatsPerRow) {
-        this.rows = rows;
-        this.numberOfSeatsPerRow = numberOfSeatsPerRow;
-        this.allSeats = new Seat[rows][numberOfSeatsPerRow];
-        this.availableSeats = rows * numberOfSeatsPerRow;
-        for(int i = 0; i < allSeats.length; ++i){
-            for (int j = 0; j < allSeats[0].length; j++){
-                allSeats[i][j] = new Seat(i,j);
+    private Venue (int rows, int cols) {
+        Set<Seat> seats1 = new LinkedHashSet<>();
+        Set<Seat> seats2 = new LinkedHashSet<>();
+        Set<Seat> seats3 = new LinkedHashSet<>();
+        Set<Seat> seats4 = new LinkedHashSet<>();
+        this.availableSeats = rows * cols;
+        this.allSeats = new Seat[rows][cols];
+        for( int i = 0; i < this.allSeats.length; i++ ){
+            for ( int j = 0; j < this.allSeats[0].length; j++ ){
+                if ( i < this.allSeats.length / 2 ) {
+                    if ( j < (this.allSeats[0].length+1) / 3 || j > 2 * (this.allSeats[0].length-1) / 3 ) {
+                        this.allSeats[i][j] = new Seat( i + "-" + j, AVAILABLE, i, j, 2 );
+                        seats2.add( this.allSeats[i][j] );
+
+                    } else {
+                        this.allSeats[i][j] = new Seat( i + "-" + j, AVAILABLE, i, j, 1 );
+                        seats1.add( this.allSeats[i][j] );
+                    }
+
+                } else {
+                    if ( j < (this.allSeats[0].length+1) / 3 || j > 2 * (this.allSeats[0].length-1) / 3 ) {
+                        this.allSeats[i][j] = new Seat( i + "-" + j, AVAILABLE, i, j, 4 );
+                        seats4.add( this.allSeats[i][j] );
+
+                    } else {
+                        this.allSeats[i][j] = new Seat( i + "-" + j, AVAILABLE, i, j, 3 );
+                        seats3.add( this.allSeats[i][j] );
+                    }
+                }
             }
         }
+
+        this.seatsByZone = ImmutableMap.of(1, seats1, 2, seats2, 3, seats3, 4, seats4);
     }
 
     public static synchronized Venue getInstance(int rows, int numberOfSeatsPerRow){
@@ -32,15 +59,13 @@ public class Venue {
         return instance;
     }
 
-    public Seat holdSeat(int row, int column) {
-        Seat seat = allSeats[row][column];
+    public void holdSeat( Seat seat ) {
         seat.hold();
         allSeats[seat.getRow()][seat.getColumn()] = seat;
         this.availableSeats -= 1;
-        return seat;
     }
 
-    public void reserveSeat(Seat seat){
+    public void reserveSeat( Seat seat ){
         seat.reserve();
         allSeats[seat.getRow()][seat.getColumn()] = seat;
     }
@@ -54,23 +79,6 @@ public class Venue {
         seat.release();
         allSeats[seat.getRow()][seat.getColumn()] = seat;
         this.availableSeats += 1;
-    }
-
-    /**
-     * Get number of seats per row
-     * @return
-     */
-    public int getNumberOfSeatsPerRow() {
-        return numberOfSeatsPerRow;
-    }
-
-
-    /**
-     * Get number of rows
-     * @return
-     */
-    public int getRows() {
-        return rows;
     }
 
     /**
@@ -90,12 +98,11 @@ public class Venue {
         return allSeats;
     }
 
-    public void setAvailableSeats(int availableSeats){
-        this.availableSeats = availableSeats;
+    public Seat getSeat( int row, int col ) {
+        return allSeats[row][col];
     }
 
-    public void setAllSeats(Seat[][] allSeats){
-        this.allSeats = allSeats;
+    public Set<Seat> getSeatByZone( int zone ) {
+        return seatsByZone.get( zone );
     }
-
 }

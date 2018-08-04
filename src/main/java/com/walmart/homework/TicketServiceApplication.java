@@ -5,6 +5,7 @@ import com.walmart.homework.models.SeatHold;
 import com.walmart.homework.models.SeatState;
 import com.walmart.homework.models.Util;
 import com.walmart.homework.service.LingTicketService;
+import org.apache.commons.validator.routines.EmailValidator;
 
 import java.util.InputMismatchException;
 import java.util.Scanner;
@@ -13,8 +14,7 @@ import java.util.Set;
 /**
  * Author: Ling Hung
  * Project: walmart-ticket-service
- * Date: 11/6/16
- * Time: 3:29 PM
+ * Date: 8/1/18
  */
 public class TicketServiceApplication {
     public static void main(String[] args) {
@@ -28,18 +28,18 @@ public class TicketServiceApplication {
         int col = colScanner.nextInt();
 
         LingTicketService lingTicketService = new LingTicketService(row, col);
-        displayAllSeats(lingTicketService.showAllSeats());
+        lingTicketService.displayAllSeats();
 
         loop: while (true) {
             lingTicketService.refresh();
             System.out.println("");
             System.out.println("Please choose from the choices below.");
-            System.out.println("1. Show all seats information.");
-            System.out.println("2. Show the number of all available seats.");
-            System.out.println("3. Hold seats.");
-            System.out.println("4. Reserve seats.");
-            System.out.println("5. Show reserved seats.");
-            System.out.println("6. Exit the program.");
+            System.out.println("1. Show me all seats information.");
+            System.out.println("2. Show me the number of available seats.");
+            System.out.println("3. I want to hold seats.");
+            System.out.println("4. I want to reserve my seats.");
+            System.out.println("5. I forget my reserved seats.");
+            System.out.println("6. Leave.");
             System.out.println();
 
             Scanner scanner = new Scanner(System.in);
@@ -55,7 +55,7 @@ public class TicketServiceApplication {
 
             switch (input) {
                 case (1): {
-                    displayAllSeats(lingTicketService.showAllSeats());
+                    lingTicketService.displayAllSeats();
                     break;
                 }
 
@@ -70,7 +70,7 @@ public class TicketServiceApplication {
                     String email;
                     try {
                         email = scanner1.next();
-                        if (!email.contains("@")) {  // TODO - Use more accurate email check method
+                        if (!EmailValidator.getInstance().isValid(email)) {
                             System.out.println("Please enter valid email.");
                             break;
                         }
@@ -86,7 +86,9 @@ public class TicketServiceApplication {
                     try {
                         numberOfSeats = scanner2.nextInt();
                         if (numberOfSeats > lingTicketService.numSeatsAvailable()) {
-                            System.out.println("Sorry, not enough seats to hold for you.");
+                            System.out.format(
+                                    "Sorry, not enough seats to hold for you. There are only %d seats available.",
+                                    lingTicketService.numSeatsAvailable() );
                             break;
                         }
 
@@ -97,9 +99,10 @@ public class TicketServiceApplication {
 
                     SeatHold seatHold = lingTicketService.findAndHoldSeats(numberOfSeats, email);
                     if (seatHold != null) {
-                        System.out.println("You have successfully held " +
-                                Util.generateSeatsString(seatHold.getSeats()) + ", your seat hold ID is " + seatHold.getHoldId() +
-                                ".It will only hold for you for 30 seconds, please reserve before it expires.");
+                        System.out.println("You have successfully held seats " +
+                                Util.generateSeatsString( seatHold.getSeats() ) +
+                                "\n, your seat hold ID is " + seatHold.getId() +
+                                ". It will hold for you for " + LingTicketService.EXPIRED_PERIOD / 1000 + " seconds, please reserve before it expires.");
 
                     } else {
                         System.out.println("Oops! Something went wrong, please try again.");
@@ -117,7 +120,7 @@ public class TicketServiceApplication {
                         holdId = scanner1.nextInt();
 
                     } catch (java.util.InputMismatchException e) {
-                        System.out.println("Please enter a valid email.");
+                        System.out.println("Please enter a valid seat hold ID (should be a number).");
                         break;
                     }
 
@@ -126,7 +129,7 @@ public class TicketServiceApplication {
                     if (confirmationCode != null) {
                         Set<Seat> seats = lingTicketService.getOrder(confirmationCode).getReservedSeats();
                         System.out.println("Congratulations! You have successfully reserved " +
-                                Util.generateSeatsString(seats) + ", your confirmation code is " + confirmationCode + ". Enjoy the show!" );
+                                Util.generateSeatsString(seats) + "\n, your confirmation code is " + confirmationCode + ". Enjoy the show!" );
 
                     } else {
                         System.out.println("Sorry, please submit hold request first or your seat hold request has expired, please try again.");
@@ -142,21 +145,20 @@ public class TicketServiceApplication {
                     Set<Seat> seats = lingTicketService.getOrder(code).getReservedSeats();
 
                     if (seats != null) {
-                        StringBuilder sb = new StringBuilder("Your reserved seats are: ");
-                        for (Seat seat: seats) {
-                            sb.append(seat.getId()).append(" ");
-                        }
-                        sb.append(". Enjoy your show!");
-                        System.out.println(sb.toString());
+                        System.out.println( "Your reserved seats are: \n" +
+                                Util.generateSeatsString( seats ) + "\n" +
+                                ". Enjoy your show!\n" );
+                        lingTicketService.displayReservedSeats( seats );
 
                     } else {
-                        System.out.println("Sorry, we can't find your order record!");
+                        System.out.println("Sorry, we can't find your order!");
                     }
 
                     break ;
                 }
 
                 case (6): {
+                    System.out.println("Bye~ Hope to see you again!");
                     System.exit(0);
                 }
 
@@ -165,40 +167,7 @@ public class TicketServiceApplication {
                 }
 
             }
-            // ...
         }
 
-    }
-
-    public static void displayAllSeats(Seat[][] allSeats) {
-        System.out.println();
-        StringBuilder labelRow = new StringBuilder("   ");
-        for (int j=0; j<allSeats[0].length; j++) {
-            labelRow.append(j+1).append(" ");
-        }
-        System.out.println(labelRow.toString());
-        System.out.println();
-
-        for (int i=0; i<allSeats.length; i++) {
-            char rowChar = Util.getCharFromInt(i);
-            StringBuilder sb = new StringBuilder();
-            sb.append(rowChar).append("  ");
-            for (int j=0; j<allSeats[0].length; j++) {
-                SeatState state = allSeats[i][j].getSeatState();
-                if (state.equals(SeatState.AVAILABLE)) {
-                    sb.append("O").append(" ");
-
-                } else if (state.equals(SeatState.HELD)) {
-                    sb.append("-").append(" ");
-
-                } else {
-                    sb.append("X").append(" ");
-                }
-            }
-            System.out.println(sb.toString());
-        }
-
-        System.out.println();
-        System.out.println("O: Available   -: Held   X: Reserved");
     }
 }
