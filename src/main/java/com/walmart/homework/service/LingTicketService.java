@@ -117,7 +117,7 @@ public class LingTicketService implements TicketService {
             for (int j=0; j<allSeats[0].length; j++) {
                 Seat seat = allSeats[i][j];
                 if (seat.getState() == SeatState.AVAILABLE) {
-                    sb.append(seat.getZone()).append(" ");
+                    sb.append("O").append(" ");
 
                 } else if (seat.getState() == SeatState.HELD) {
                     sb.append("-").append(" ");
@@ -130,7 +130,7 @@ public class LingTicketService implements TicketService {
         }
 
         System.out.println();
-        System.out.println("1-4: Available Zone  -: Held   X: Reserved");
+        System.out.println("O: Available  -: Held  X: Reserved");
     }
 
     public void displayReservedSeats( Set<Seat> seats ) {

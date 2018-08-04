@@ -26,8 +26,12 @@ public class Venue {
         this.allSeats = new Seat[rows][cols];
         for( int i = 0; i < this.allSeats.length; i++ ){
             for ( int j = 0; j < this.allSeats[0].length; j++ ){
+                boolean rightBound = this.allSeats[0].length % 3 == 0 ?
+                        j >= 2 * this.allSeats[0].length / 3 : j > 2 * this.allSeats[0].length / 3;
+                boolean leftBound = j < this.allSeats[0].length / 3;
+
                 if ( i < this.allSeats.length / 2 ) {
-                    if ( j < (this.allSeats[0].length+1) / 3 || j > 2 * (this.allSeats[0].length-1) / 3 ) {
+                    if ( leftBound || rightBound ) {
                         this.allSeats[i][j] = new Seat( i + "-" + j, AVAILABLE, i, j, 2 );
                         seats2.add( this.allSeats[i][j] );
 
@@ -37,7 +41,7 @@ public class Venue {
                     }
 
                 } else {
-                    if ( j < (this.allSeats[0].length+1) / 3 || j > 2 * (this.allSeats[0].length-1) / 3 ) {
+                    if ( leftBound || rightBound ) {
                         this.allSeats[i][j] = new Seat( i + "-" + j, AVAILABLE, i, j, 4 );
                         seats4.add( this.allSeats[i][j] );
 
@@ -96,10 +100,6 @@ public class Venue {
      */
     public Seat[][] getAllSeats() {
         return allSeats;
-    }
-
-    public Seat getSeat( int row, int col ) {
-        return allSeats[row][col];
     }
 
     public Set<Seat> getSeatByZone( int zone ) {

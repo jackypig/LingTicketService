@@ -102,7 +102,8 @@ public class TicketServiceApplication {
                         System.out.println("You have successfully held seats " +
                                 Util.generateSeatsString( seatHold.getSeats() ) +
                                 "\n, your seat hold ID is " + seatHold.getId() +
-                                ". It will hold for you for " + LingTicketService.EXPIRED_PERIOD / 1000 + " seconds, please reserve before it expires.");
+                                "\n as follows. It will hold for you for " + LingTicketService.EXPIRED_PERIOD / 1000 + " seconds, please reserve before it expires.");
+                        lingTicketService.displayReservedSeats( seatHold.getSeats() );
 
                     } else {
                         System.out.println("Oops! Something went wrong, please try again.");
